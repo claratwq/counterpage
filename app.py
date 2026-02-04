@@ -20,11 +20,12 @@ def redirect(url):
     
     return f'<meta http-equiv="refresh" content="1; url={decoded_url}"><p>Redirecting…</p>'
 
+# Remove allow_flagging here
 iface = gr.Interface(
     fn=redirect,
     inputs=gr.Textbox(label="URL", visible=False),
-    outputs=gr.HTML(),
-    allow_flagging="never"
+    outputs=gr.HTML()
 )
 
-iface.launch()
+# Pass allow_flagging here
+iface.launch(allow_flagging="never")
