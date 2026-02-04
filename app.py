@@ -1,30 +1,40 @@
-import gradio as gr
-from urllib.parse import unquote
+from flask import Flask, request, redirect
 from datetime import datetime
+import urllib.parse
 import csv
 import os
 
+app = Flask(__name__)
+
 LOG_FILE = "click_log.csv"
+
+# Create log file with header if it doesn't exist
 if not os.path.exists(LOG_FILE):
     with open(LOG_FILE, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["timestamp", "target_url"])
+        writer.writerow(["timestamp", "target_url", "referrer", "user_agent"])
 
-def redirect(url):
-    decoded_url = unquote(url)
-    
-    # log click
+@app.route("/")
+def track_redirect():
+    url = request.args.get("url")
+    if not url:
+        return "Missing URL parameter", 400
+
+    decoded_url = urllib.parse.unquote(url)
+
+    # Log click
     with open(LOG_FILE, "a", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow([datetime.utcnow().isoformat(), decoded_url])
-    
-    return f'<meta http-equiv="refresh" content="1; url={decoded_url}"><p>Redirecting…</p>'
+        writer.writerow([
+            datetime.utcnow().isoformat(),
+            decoded_url,
+            request.referrer,
+            request.headers.get("User-Agent")
+        ])
 
-iface = gr.Interface(
-    fn=redirect,
-    inputs=gr.Textbox(label="URL", visible=False),
-    outputs=gr.HTML()
-)
+    # Redirect user
+    return redirect(decoded_url)
 
-# Simply launch — no allow_flagging argument
-iface.launch(server_name="0.0.0.0", server_port=7860)
+if __name__ == "__main__":
+    # Listen on all interfaces, port 5000 for Render/Heroku
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
