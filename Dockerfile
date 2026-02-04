@@ -1,10 +1,11 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
 RUN pip install flask
 
-COPY app.py .
+# Copy the rest of the app
+COPY . .
 
 EXPOSE 7860
 

@@ -7,8 +7,6 @@ import os
 app = Flask(__name__)
 
 LOG_FILE = "click_log.csv"
-
-# Ensure log file exists
 if not os.path.exists(LOG_FILE):
     with open(LOG_FILE, "w", newline="") as f:
         writer = csv.writer(f)
@@ -22,21 +20,20 @@ HTML_TEMPLATE = """
     <meta http-equiv="refresh" content="1;url={{ target }}">
 </head>
 <body>
-    <p>Redirecting you to Google Maps…</p>
+    <p>Redirecting you…</p>
 </body>
 </html>
 """
 
-@app.route("/track")
-def track():
+@app.route("/")
+def track_redirect():
     target = request.args.get("url")
-
     if not target:
-        return "Missing target URL", 400
+        return "Missing URL", 400
 
     decoded_target = urllib.parse.unquote(target)
 
-    # Log click
+    # log the click
     with open(LOG_FILE, "a", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([
@@ -46,12 +43,7 @@ def track():
             request.headers.get("User-Agent")
         ])
 
-    # Redirect
     return render_template_string(HTML_TEMPLATE, target=decoded_target)
-
-@app.route("/")
-def home():
-    return "Dummy for.sg click tracker is running."
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=7860)
